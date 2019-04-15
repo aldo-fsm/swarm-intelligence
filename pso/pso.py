@@ -1,7 +1,7 @@
 import numpy as np
 
 class PSO:
-    def __init__(self, num_particles, num_dims, initializer, communication_func, c1=2.05, c2=2.05, clerc_factor=1, initial_w=0, final_w=0, w_decay_iterations=0):
+    def __init__(self, num_particles, num_dims, topology, c1=2.05, c2=2.05, clerc_factor=1, initial_w=0, final_w=0, w_decay_iterations=0, constraint=None, initializer=None):
         self.num_particles = num_particles
         self.num_dims = num_dims
         self.c1 = c1
@@ -12,7 +12,8 @@ class PSO:
         self.initial_w = initial_w
         self.final_w = final_w
         self.w_decay_iterations = w_decay_iterations
-        self.communication_func = communication_func
+        self.topology = topology
+        self.constraint = constraint if constraint else lambda x: True
 
     def isInitialized(self):
         return self.iteration > -1
@@ -23,20 +24,31 @@ class PSO:
         else:
             return self.final_w
 
-    def initialize(self):
+    def getBestSolution(self):
+        best_index = np.argmin(self.pbest_fitness)
+        return self.pbest[best_index], self.pbest_fitness[best_index]
+
+    def initialize(self, initializer=None):
+        if not initializer:
+            initializer = self.initializer
+        assert initializer
+
         self.iteration = 0
-        self.pos = self.initializer(self.num_particles, self.num_dims)
+        self.pos = initializer(self.num_particles, self.num_dims)
         self.vel = np.zeros(self.pos.shape)
         self.pbest = self.pos
         self.pbest_fitness = np.ones(len(self.pbest))*np.inf
 
     def minimize(self, fitness_func):
-        fitness = np.array([fitness_func(x) for x in self.pos])
+        assert self.isInitialized()
+        fitness = np.apply_along_axis(fitness_func, 1, self.pos)
         better = fitness < self.pbest_fitness
-        self.pbest_fitness = np.where(better, fitness, self.pbest_fitness)
-        self.pbest = np.where(better, self.pos, self.pbest)
+        satisfy_constraints = np.apply_along_axis(self.constraint, 1, self.pos)
+        should_update = np.logical_and(better, satisfy_constraints)
+        self.pbest_fitness = np.where(should_update, fitness, self.pbest_fitness)
+        self.pbest = np.where(should_update, self.pos, self.pbest)
 
-        lbest = self.pbest[self.communication_func(self.pbest_fitness)]
+        lbest = self.pbest[self.topology(self.pbest_fitness)]
 
         r1, r2 = [np.random.uniform(0, 1, self.num_particles) for _ in range(2)]
         self.vel = self._get_w()*self.vel + self.c1*r1*(self.pbest - self.pos) + self.c2*r2*(lbest - self.pos)
