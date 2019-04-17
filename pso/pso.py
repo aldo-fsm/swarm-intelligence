@@ -51,5 +51,5 @@ class PSO:
         lbest = self.pbest[self.topology(self.pbest_fitness)]
         
         r1, r2 = [np.random.uniform(0, 1, self.num_particles)[:, None] for _ in range(2)]
-        self.vel = self._get_w()*self.vel + self.c1*r1*(self.pbest - self.pos) + self.c2*r2*(lbest - self.pos)
-        self.pos = self.pos + self.clerc_factor*self.vel
+        self.vel = self.clerc_factor*(self._get_w()*self.vel + self.c1*r1*(self.pbest - self.pos) + self.c2*r2*(lbest - self.pos))
+        self.pos = self.pos + self.vel
