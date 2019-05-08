@@ -14,6 +14,7 @@ class PSO:
         self.w_decay_iterations = w_decay_iterations
         self.topology = topology
         self.constraint = constraint if constraint else lambda x: True
+        self.fitness_evaluations = 0
 
     def isInitialized(self):
         return self.iteration > -1
@@ -23,6 +24,12 @@ class PSO:
             return self.initial_w - self.iteration*(self.initial_w - self.final_w)/self.w_decay_iterations
         else:
             return self.final_w
+    
+    def _fitnessCounter(self, fitness_func):
+        def f(x):
+            self.fitness_evaluations += 1
+            return fitness_func(x)
+        return f
 
     def getBestSolution(self):
         best_index = np.argmin(self.pbest_fitness)
@@ -34,6 +41,7 @@ class PSO:
         assert initializer
 
         self.iteration = 0
+        self.fitness_evaluations = 0
         self.pos = initializer(self.num_particles, self.num_dims)
         self.vel = np.zeros(self.pos.shape)
         self.pbest = self.pos
@@ -41,6 +49,7 @@ class PSO:
 
     def minimize(self, fitness_func):
         assert self.isInitialized()
+        fitness_func = self._fitnessCounter(fitness_func)
         fitness = np.apply_along_axis(fitness_func, 1, self.pos)[:, None]
         better = fitness < self.pbest_fitness
         satisfy_constraints = np.apply_along_axis(self.constraint, 1, self.pos)[:, None]

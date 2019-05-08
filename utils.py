@@ -1,5 +1,5 @@
 import numpy as np
-from pso.initializers import UniformInitializer
+from initializers import UniformInitializer
 
 def test_algorithms(algorithms, objective_function, num_experiments, num_iterations, search_bounds):
     results = []
