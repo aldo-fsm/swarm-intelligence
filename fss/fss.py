@@ -1,7 +1,7 @@
 import numpy as np
 
 class FSS:
-    def __init__(self, num_particles, num_dims, initial_weight, ind_step_range, vol_step_range, step_decay_iterations=0, weight_range=[-np.inf, np.inf] constraint=None, initializer=None):
+    def __init__(self, num_particles, num_dims, initial_weight, ind_step_range, vol_step_range, step_decay_iterations=0, weight_range=[-np.inf, np.inf], constraint=None, initializer=None):
         self.num_particles = num_particles
         self.num_dims = num_dims
         self.initial_weight = initial_weight
@@ -10,7 +10,7 @@ class FSS:
         self.step_decay_iterations = step_decay_iterations
         self.weight_range = weight_range
         self.iteration = -1
-        self.constraint = constraint if constraint else lambda x: True
+        self.constraint = constraint# if constraint else lambda x: True
         self.initializer = initializer
         self.fitness_evaluations = 0
         if self.constraint:
@@ -85,7 +85,8 @@ class FSS:
 
         B = self.barycenter()
         barycenterDistVector = self.pos - B
-        self.pos = self.pos + vol_signal*self._get_vol_step()*barycenterDistVector/np.linalg.norm(barycenterDistVector, axis=1)
+        rand_vec = np.random.uniform(0, 1, size=self.pos.shape)
+        self.pos = self.pos + vol_signal*self._get_vol_step()*rand_vec*barycenterDistVector/np.linalg.norm(barycenterDistVector, axis=1)[:, None]
 
         fitness = np.where(better, fitness_after, fitness_before)
         best_index = np.argmin(fitness)
