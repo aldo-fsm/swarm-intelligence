@@ -36,11 +36,13 @@ class FSS:
         else:
             return final
 
-    def initialize(self, initializer=None):
+    def initialize(self, fitness_function, initializer=None):
         if not initializer:
             initializer = self.initializer
         assert initializer
 
+
+        self.fitness_function = self._fitnessCounter(fitness_function)
         self.iteration = 0
         self.fitness_evaluations = 0
         self.pos = initializer(self.num_particles, self.num_dims)
@@ -59,13 +61,12 @@ class FSS:
     def schoolWeight(self):
         return np.sum(self.weights)
 
-    def minimize(self, fitness_func):
+    def minimize(self):
         assert self.isInitialized()
-        fitness_func = self._fitnessCounter(fitness_func)
         
-        fitness_before = np.apply_along_axis(fitness_func, 1, self.pos)[:, None]
+        fitness_before = np.apply_along_axis(self.fitness_function, 1, self.pos)[:, None]
         new_pos = self.pos + self._get_ind_step()*np.random.uniform(-1, 1, size=self.pos.shape)
-        fitness_after = np.apply_along_axis(fitness_func, 1, new_pos)[:, None]
+        fitness_after = np.apply_along_axis(self.fitness_function, 1, new_pos)[:, None]
         delta_fitness = -(fitness_after - fitness_before) # Minimization -> lower is better
         better = delta_fitness > 0
         new_pos = np.where(better, new_pos, self.pos)
@@ -92,3 +93,5 @@ class FSS:
         best_index = np.argmin(fitness)
         if fitness[best_index] < self.getBestSolution()[1]:
             self.best_solution = self.pos[best_index], fitness[best_index]
+
+        self.iteration += 1

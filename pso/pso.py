@@ -35,11 +35,12 @@ class PSO:
         best_index = np.argmin(self.pbest_fitness)
         return self.pbest[best_index], self.pbest_fitness[best_index]
 
-    def initialize(self, initializer=None):
+    def initialize(self, fitness_function, initializer=None):
         if not initializer:
             initializer = self.initializer
         assert initializer
 
+        self.fitness_function = self._fitnessCounter(fitness_function)
         self.iteration = 0
         self.fitness_evaluations = 0
         self.pos = initializer(self.num_particles, self.num_dims)
@@ -47,10 +48,9 @@ class PSO:
         self.pbest = self.pos
         self.pbest_fitness = (np.ones(len(self.pbest))*np.inf)[:, None]
 
-    def minimize(self, fitness_func):
+    def minimize(self):
         assert self.isInitialized()
-        fitness_func = self._fitnessCounter(fitness_func)
-        fitness = np.apply_along_axis(fitness_func, 1, self.pos)[:, None]
+        fitness = np.apply_along_axis(self.fitness_function, 1, self.pos)[:, None]
         better = fitness < self.pbest_fitness
         satisfy_constraints = np.apply_along_axis(self.constraint, 1, self.pos)[:, None]
         should_update = np.logical_and(better, satisfy_constraints)
@@ -62,3 +62,4 @@ class PSO:
         r1, r2 = [np.random.uniform(0, 1, self.num_particles)[:, None] for _ in range(2)]
         self.vel = self.clerc_factor*(self._get_w()*self.vel + self.c1*r1*(self.pbest - self.pos) + self.c2*r2*(lbest - self.pos))
         self.pos = self.pos + self.vel
+        self.iteration += 1
