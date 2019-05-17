@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 
 class FSS:
-    def __init__(self, num_particles, num_dims, initial_weight, ind_step_range, vol_step_range, step_decay_iterations=0, weight_range=[-np.inf, np.inf], constraint=None, initializer=None):
+    def __init__(self, num_particles, num_dims, initial_weight, ind_step_range, vol_step_range, step_decay_iterations=0, weight_range=[-np.inf, np.inf], constraint=None, initializer=None), keep_history=False:
         self.num_particles = num_particles
         self.num_dims = num_dims
         self.initial_weight = initial_weight
@@ -12,7 +13,10 @@ class FSS:
         self.iteration = -1
         self.constraint = constraint# if constraint else lambda x: True
         self.initializer = initializer
+        self.keep_history = keep_history
+        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
         self.fitness_evaluations = 0
+
         if self.constraint:
             raise NotImplementedError('Restrições ainda não foram implementadas')
 
@@ -52,7 +56,16 @@ class FSS:
     def _fitnessCounter(self, fitness_func):
         def f(x):
             self.fitness_evaluations += 1
-            return fitness_func(x)
+            fitness = fitness_func(x)
+            if fitness < self.getBestSolution()[1]:
+                self.best_solution = x, fitness
+            if self.keep_history:
+                self.history = self.history.append({
+                    'best_fitness': self.getBestSolution()[1],
+                    'fitness_evaluations': self.fitness_evaluations,
+                    'iterations': self.iteration
+                }, ignore_index=True)
+            return fitness
         return f
 
     def barycenter(self):
@@ -88,10 +101,5 @@ class FSS:
         barycenterDistVector = self.pos - B
         rand_vec = np.random.uniform(0, 1, size=self.pos.shape)
         self.pos = self.pos + vol_signal*self._get_vol_step()*rand_vec*barycenterDistVector/np.linalg.norm(barycenterDistVector, axis=1)[:, None]
-
-        fitness = np.where(better, fitness_after, fitness_before)
-        best_index = np.argmin(fitness)
-        if fitness[best_index] < self.getBestSolution()[1]:
-            self.best_solution = self.pos[best_index], fitness[best_index]
 
         self.iteration += 1

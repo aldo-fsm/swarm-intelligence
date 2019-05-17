@@ -1,18 +1,20 @@
 import numpy as np
+import pandas as pd
 from initializers import UniformInitializer
 
 class ABC:
-    def __init__(self, num_particles, num_dims, search_space, attempts_to_exhaust, constraint=None):
+    def __init__(self, num_particles, num_dims, attempts_to_exhaust, constraint=None, keep_history=False):
         self.num_particles = num_particles
         self.num_employed = int(np.ceil(num_particles/2))
         self.num_onlooker = num_particles - self.num_employed
         self.num_dims = num_dims
-        self.search_space = search_space
         self.attempts_to_exhaust = attempts_to_exhaust
         self.iteration = -1
         self.constraint = constraint# if constraint else lambda x: True
         self.fitness_evaluations = 0
         self.initializer = UniformInitializer(self.search_space)
+        self.keep_history = keep_history
+        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
         if self.constraint:
             raise NotImplementedError('Restrições ainda não foram implementadas')
 
@@ -30,18 +32,23 @@ class ABC:
         return selection
 
     def greedySearch(self, foodsources_indexes):
-        foodsources = self.employed[foodsources_indexes]
-        new_values = self.initializer(*foodsources.shape)
-        selected_dims = np.random.choice(self.num_dims, size=foodsources.shape[0])
-        foodsources[range(foodsources.shape[0]), selected_dims] = new_values[range(foodsources.shape[0]), selected_dims]
-        new_fitness = np.apply_along_axis(self.fitness_function, 1, foodsources)[:, None]
-        better = new_fitness < self.foodsources_fitness
-        self.employed[foodsources_indexes] = np.where(better, foodsources, self.employed[foodsources_indexes])
-        self.foodsources_fitness[foodsources_indexes] = np.where(better, new_fitness, self.foodsources_fitness[foodsources_indexes])
-        self.attempts_remaining[foodsources_indexes] -= np.logical_not(better)
+        if len(foodsources_indexes) > 0:
+            foodsources = self.employed[foodsources_indexes]
+            new_values = self.initializer(*foodsources.shape)
+            selected_dims = np.random.choice(self.num_dims, size=foodsources.shape[0])
+            foodsources[range(foodsources.shape[0]), selected_dims] = new_values[range(foodsources.shape[0]), selected_dims]
+            new_fitness = np.apply_along_axis(self.fitness_function, 1, foodsources)[:, None]
+            better = new_fitness < self.foodsources_fitness[foodsources_indexes]
+            print(foodsources_indexes.shape)
+            print(self.attempts_remaining[foodsources_indexes].shape)
+            print(np.logical_not(better).shape)
+            self.employed[foodsources_indexes] = np.where(better, foodsources, self.employed[foodsources_indexes])
+            self.foodsources_fitness[foodsources_indexes] = np.where(better, new_fitness, self.foodsources_fitness[foodsources_indexes])
+            self.attempts_remaining[foodsources_indexes] -= np.logical_not(better).reshape(-1)
 
-    def initialize(self, fitness_function):
+    def initialize(self, fitness_function, search_space):
         self.fitness_function = self._fitnessCounter(fitness_function)
+        self.search_space = search_space
         self.iteration = 0
         self.fitness_evaluations = 0
         self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
@@ -55,6 +62,12 @@ class ABC:
             fitness = fitness_func(x)
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
+            if self.keep_history:
+                self.history = self.history.append({
+                    'best_fitness': self.getBestSolution()[1],
+                    'fitness_evaluations': self.fitness_evaluations,
+                    'iterations': self.iteration
+                }, ignore_index=True)
             return fitness
         return f
 
@@ -64,6 +77,10 @@ class ABC:
     def adjust_fitness2(self, fitness): 
         return np.where(fitness > 0, 1/(1+fitness), 1+np.abs(fitness))
 
+    def evaluateFoodsources(self, foodsources_indexes):
+        if len(foodsources_indexes) > 0:
+            self.foodsources_fitness[foodsources_indexes] = np.apply_along_axis(self.fitness_function, 1, self.employed[foodsources_indexes])[:, None]
+
     def minimize(self):
         assert self.isInitialized()
         
@@ -71,7 +88,7 @@ class ABC:
         new_foodsources_selection = self.findNewFoodSources()
         
         # Employed bees evaluate new foodsources quality and do a greedy search
-        self.foodsources_fitness[new_foodsources_selection] = np.apply_along_axis(self.fitness_function, 1, self.employed[new_foodsources_selection])[:, None]
+        self.evaluateFoodsources(np.arange(self.num_employed)[new_foodsources_selection])
         fitness = self.foodsources_fitness
         self.greedySearch(np.arange(self.num_employed))
 

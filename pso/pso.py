@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 
 class PSO:
-    def __init__(self, num_particles, num_dims, topology, c1=2.05, c2=2.05, clerc_factor=1, initial_w=1, final_w=1, w_decay_iterations=0, constraint=None, initializer=None):
+    def __init__(self, num_particles, num_dims, topology, c1=2.05, c2=2.05, clerc_factor=1, initial_w=1, final_w=1, w_decay_iterations=0, constraint=None, initializer=None, keep_history=False):
         self.num_particles = num_particles
         self.num_dims = num_dims
         self.c1 = c1
@@ -15,6 +16,9 @@ class PSO:
         self.topology = topology
         self.constraint = constraint if constraint else lambda x: True
         self.fitness_evaluations = 0
+        self.keep_history = keep_history
+        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
+        
 
     def isInitialized(self):
         return self.iteration > -1
@@ -25,15 +29,24 @@ class PSO:
         else:
             return self.final_w
     
+
     def _fitnessCounter(self, fitness_func):
         def f(x):
             self.fitness_evaluations += 1
-            return fitness_func(x)
+            fitness = fitness_func(x)
+            if fitness < self.getBestSolution()[1]:
+                self.best_solution = x, fitness
+            if self.keep_history:
+                self.history = self.history.append({
+                    'best_fitness': self.getBestSolution()[1],
+                    'fitness_evaluations': self.fitness_evaluations,
+                    'iterations': self.iteration
+                }, ignore_index=True)
+            return fitness
         return f
-
+    
     def getBestSolution(self):
-        best_index = np.argmin(self.pbest_fitness)
-        return self.pbest[best_index], self.pbest_fitness[best_index]
+        return self.best_solution
 
     def initialize(self, fitness_function, initializer=None):
         if not initializer:
@@ -47,6 +60,7 @@ class PSO:
         self.vel = np.zeros(self.pos.shape)
         self.pbest = self.pos
         self.pbest_fitness = (np.ones(len(self.pbest))*np.inf)[:, None]
+        self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
 
     def minimize(self):
         assert self.isInitialized()
