@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 class FSS:
-    def __init__(self, num_particles, num_dims, initial_weight, ind_step_range, vol_step_range, step_decay_iterations=0, weight_range=[-np.inf, np.inf], constraint=None, initializer=None), keep_history=False:
+    def __init__(self, num_particles, num_dims, initial_weight, ind_step_range, vol_step_range, step_decay_iterations=0, weight_range=[-np.inf, np.inf], constraint=None, initializer=None, keep_history=False):
         self.num_particles = num_particles
         self.num_dims = num_dims
         self.initial_weight = initial_weight
@@ -14,7 +14,6 @@ class FSS:
         self.constraint = constraint# if constraint else lambda x: True
         self.initializer = initializer
         self.keep_history = keep_history
-        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
         self.fitness_evaluations = 0
 
         if self.constraint:
@@ -52,6 +51,7 @@ class FSS:
         self.pos = initializer(self.num_particles, self.num_dims)
         self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
         self.weights = np.ones((self.num_particles, 1))*self.initial_weight
+        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
 
     def _fitnessCounter(self, fitness_func):
         def f(x):

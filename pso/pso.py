@@ -17,8 +17,6 @@ class PSO:
         self.constraint = constraint if constraint else lambda x: True
         self.fitness_evaluations = 0
         self.keep_history = keep_history
-        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
-        
 
     def isInitialized(self):
         return self.iteration > -1
@@ -61,6 +59,7 @@ class PSO:
         self.pbest = self.pos
         self.pbest_fitness = (np.ones(len(self.pbest))*np.inf)[:, None]
         self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
+        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
 
     def minimize(self):
         assert self.isInitialized()

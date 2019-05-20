@@ -12,9 +12,7 @@ class ABC:
         self.iteration = -1
         self.constraint = constraint# if constraint else lambda x: True
         self.fitness_evaluations = 0
-        self.initializer = UniformInitializer(self.search_space)
         self.keep_history = keep_history
-        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
         if self.constraint:
             raise NotImplementedError('Restrições ainda não foram implementadas')
 
@@ -39,9 +37,6 @@ class ABC:
             foodsources[range(foodsources.shape[0]), selected_dims] = new_values[range(foodsources.shape[0]), selected_dims]
             new_fitness = np.apply_along_axis(self.fitness_function, 1, foodsources)[:, None]
             better = new_fitness < self.foodsources_fitness[foodsources_indexes]
-            print(foodsources_indexes.shape)
-            print(self.attempts_remaining[foodsources_indexes].shape)
-            print(np.logical_not(better).shape)
             self.employed[foodsources_indexes] = np.where(better, foodsources, self.employed[foodsources_indexes])
             self.foodsources_fitness[foodsources_indexes] = np.where(better, new_fitness, self.foodsources_fitness[foodsources_indexes])
             self.attempts_remaining[foodsources_indexes] -= np.logical_not(better).reshape(-1)
@@ -49,12 +44,14 @@ class ABC:
     def initialize(self, fitness_function, search_space):
         self.fitness_function = self._fitnessCounter(fitness_function)
         self.search_space = search_space
+        self.initializer = UniformInitializer(search_space)
         self.iteration = 0
         self.fitness_evaluations = 0
         self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
         self.employed = np.zeros((self.num_employed, self.num_dims))
         self.foodsources_fitness = np.ones((self.num_employed, 1))*np.inf
         self.attempts_remaining = np.zeros(self.num_employed)
+        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
 
     def _fitnessCounter(self, fitness_func):
         def f(x):
