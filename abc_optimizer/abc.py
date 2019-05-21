@@ -59,12 +59,12 @@ class ABC:
             fitness = fitness_func(x)
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
-            if self.keep_history:
-                self.history.append([
-                    self.getBestSolution()[1], # best_fitness
-                    self.fitness_evaluations,  # fitness_evaluations
-                    self.iteration             # iterations
-                ])
+            # if self.keep_history:
+            #     self.history.append([
+            #         self.getBestSolution()[1], # best_fitness
+            #         self.fitness_evaluations,  # fitness_evaluations
+            #         self.iteration             # iterations
+            #     ])
             return fitness
         return f
 
@@ -102,3 +102,9 @@ class ABC:
             self.greedySearch(selected_foodsources_indexes)        
         
         self.iteration += 1
+        if self.keep_history:
+            self.history.append([
+                self.getBestSolution()[1], # best_fitness
+                self.fitness_evaluations,  # fitness_evaluations
+                self.iteration             # iterations
+            ])

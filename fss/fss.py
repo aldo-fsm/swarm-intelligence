@@ -62,12 +62,12 @@ class FSS:
             fitness = fitness_func(x)
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
-            if self.keep_history:
-                self.history.append([
-                    self.getBestSolution()[1], # best_fitness
-                    self.fitness_evaluations,  # fitness_evaluations
-                    self.iteration             # iterations
-                ])
+            # if self.keep_history:
+            #     self.history.append([
+            #         self.getBestSolution()[1], # best_fitness
+            #         self.fitness_evaluations,  # fitness_evaluations
+            #         self.iteration             # iterations
+            #     ])
             return fitness
         return f
 
@@ -106,3 +106,9 @@ class FSS:
         self.pos = self.pos + vol_signal*self._get_vol_step()*rand_vec*barycenterDistVector/np.linalg.norm(barycenterDistVector, axis=1)[:, None]
 
         self.iteration += 1
+        if self.keep_history:
+            self.history.append([
+                self.getBestSolution()[1], # best_fitness
+                self.fitness_evaluations,  # fitness_evaluations
+                self.iteration             # iterations
+            ])

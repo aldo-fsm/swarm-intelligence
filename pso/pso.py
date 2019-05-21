@@ -34,12 +34,12 @@ class PSO:
             fitness = fitness_func(x)
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
-            if self.keep_history:
-                self.history.append([
-                    self.getBestSolution()[1], # best_fitness
-                    self.fitness_evaluations,  # fitness_evaluations
-                    self.iteration             # iterations
-                ])
+            # if self.keep_history:
+            #     self.history.append([
+            #         self.getBestSolution()[1], # best_fitness
+            #         self.fitness_evaluations,  # fitness_evaluations
+            #         self.iteration             # iterations
+            #     ])
             return fitness
         return f
     
@@ -79,3 +79,9 @@ class PSO:
         self.vel = self.clerc_factor*(self._get_w()*self.vel + self.c1*r1*(self.pbest - self.pos) + self.c2*r2*(lbest - self.pos))
         self.pos = self.pos + self.vel
         self.iteration += 1
+        if self.keep_history:
+            self.history.append([
+                self.getBestSolution()[1], # best_fitness
+                self.fitness_evaluations,  # fitness_evaluations
+                self.iteration             # iterations
+            ])
