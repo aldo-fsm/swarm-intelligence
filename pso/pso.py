@@ -35,14 +35,17 @@ class PSO:
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
             if self.keep_history:
-                self.history = self.history.append({
-                    'best_fitness': self.getBestSolution()[1],
-                    'fitness_evaluations': self.fitness_evaluations,
-                    'iterations': self.iteration
-                }, ignore_index=True)
+                self.history.append([
+                    self.getBestSolution()[1], # best_fitness
+                    self.fitness_evaluations,  # fitness_evaluations
+                    self.iteration             # iterations
+                ])
             return fitness
         return f
     
+    def getHistory(self):
+        return pd.DataFrame(self.history, columns=['best_fitness', 'fitness_evaluations', 'iterations'])
+
     def getBestSolution(self):
         return self.best_solution
 
@@ -59,7 +62,7 @@ class PSO:
         self.pbest = self.pos
         self.pbest_fitness = (np.ones(len(self.pbest))*np.inf)[:, None]
         self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
-        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
+        self.history = []
 
     def minimize(self):
         assert self.isInitialized()

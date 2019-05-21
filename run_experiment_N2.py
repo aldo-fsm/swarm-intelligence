@@ -99,7 +99,7 @@ def main():
                         progress = round(100*algoritm.fitness_evaluations/num_fitness_evaluations)
                         pgb.update(progress)
 
-                history = algoritm.history
+                history = algoritm.getHistory()
                 history.insert(history.shape[1], 'experiment', value=simulation)
                 history.insert(history.shape[1], 'test_function', value=function_name)
                 results = results.append(history, sort=False, ignore_index=True)

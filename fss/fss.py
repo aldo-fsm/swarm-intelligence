@@ -39,6 +39,9 @@ class FSS:
         else:
             return final
 
+    def getHistory(self):
+        return pd.DataFrame(self.history, columns=['best_fitness', 'fitness_evaluations', 'iterations'])
+
     def initialize(self, fitness_function, initializer=None):
         if not initializer:
             initializer = self.initializer
@@ -51,7 +54,7 @@ class FSS:
         self.pos = initializer(self.num_particles, self.num_dims)
         self.best_solution = np.array([np.NaN]*self.num_dims), np.inf
         self.weights = np.ones((self.num_particles, 1))*self.initial_weight
-        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
+        self.history = []
 
     def _fitnessCounter(self, fitness_func):
         def f(x):
@@ -60,11 +63,11 @@ class FSS:
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
             if self.keep_history:
-                self.history = self.history.append({
-                    'best_fitness': self.getBestSolution()[1],
-                    'fitness_evaluations': self.fitness_evaluations,
-                    'iterations': self.iteration
-                }, ignore_index=True)
+                self.history.append([
+                    self.getBestSolution()[1], # best_fitness
+                    self.fitness_evaluations,  # fitness_evaluations
+                    self.iteration             # iterations
+                ])
             return fitness
         return f
 

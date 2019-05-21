@@ -51,7 +51,7 @@ class ABC:
         self.employed = np.zeros((self.num_employed, self.num_dims))
         self.foodsources_fitness = np.ones((self.num_employed, 1))*np.inf
         self.attempts_remaining = np.zeros(self.num_employed)
-        self.history = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations'])
+        self.history = []
 
     def _fitnessCounter(self, fitness_func):
         def f(x):
@@ -60,13 +60,16 @@ class ABC:
             if fitness < self.getBestSolution()[1]:
                 self.best_solution = x, fitness
             if self.keep_history:
-                self.history = self.history.append({
-                    'best_fitness': self.getBestSolution()[1],
-                    'fitness_evaluations': self.fitness_evaluations,
-                    'iterations': self.iteration
-                }, ignore_index=True)
+                self.history.append([
+                    self.getBestSolution()[1], # best_fitness
+                    self.fitness_evaluations,  # fitness_evaluations
+                    self.iteration             # iterations
+                ])
             return fitness
         return f
+
+    def getHistory(self):
+        return pd.DataFrame(self.history, columns=['best_fitness', 'fitness_evaluations', 'iterations'])
 
     def adjust_fitness(self, fitness): 
         return fitness - fitness.max() - fitness.min()
