@@ -73,7 +73,6 @@ fss = FSS(
 from tqdm import trange
 import time
 def main():
-    results = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations', 'experiment', 'test_function'])
     algoritms = tqdm([
         (pso, 'PSO'),
         (abc, 'ABC'),
@@ -88,6 +87,7 @@ def main():
         functions.set_postfix({'Function': function_name})
         for algoritm, algorithm_name in algoritms:
             algoritms.set_postfix({'Algorithm': algorithm_name})
+            results = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations', 'experiment', 'test_function'])
             for simulation in trange(num_simulations, desc='Runs'):
                 if algorithm_name == 'ABC':
                     algoritm.initialize(function, search_space=search_space)
@@ -103,11 +103,8 @@ def main():
                 history.insert(history.shape[1], 'experiment', value=simulation)
                 history.insert(history.shape[1], 'test_function', value=function_name)
                 results = results.append(history, sort=False, ignore_index=True)
-
-    print('\nSaving results...')
-    file_name = 'experiment_N2_results.csv'
-    results.to_csv(file_name)
-    print('Results saved to ' + file_name)
+            file_name = 'tmp/experiment_N2_results-{}-{}.csv'.format(function_name, algorithm_name)
+            results.to_csv(file_name)
     
 if __name__ == '__main__':
     main()
