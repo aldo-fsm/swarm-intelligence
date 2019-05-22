@@ -83,11 +83,11 @@ def main():
         (rastriginsFunction, [[-5.12, 5.12]], 'Rastrigin'),
         (rosenbrockFunction, [[-5, 10]], 'Rosenbrock')
     ], 'Functions')
+    results = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations', 'experiment', 'algorithm', 'test_function'])
     for function, search_space, function_name in functions:
         functions.set_postfix({'Function': function_name})
         for algoritm, algorithm_name in algoritms:
             algoritms.set_postfix({'Algorithm': algorithm_name})
-            results = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations', 'experiment', 'test_function'])
             for simulation in trange(num_simulations, desc='Runs'):
                 if algorithm_name == 'ABC':
                     algoritm.initialize(function, search_space=search_space)
@@ -100,11 +100,15 @@ def main():
                         pgb.update(progress)
 
                 history = algoritm.getHistory()
-                history.insert(history.shape[1], 'experiment', value=simulation)
-                history.insert(history.shape[1], 'test_function', value=function_name)
+                history.insert(loc=history.shape[1], column='experiment', value=simulation)
+                history.insert(loc=history.shape[1], column='algorithm', value=algorithm_name)
+                history.insert(loc=history.shape[1], column='test_function', value=function_name)
                 results = results.append(history, sort=False, ignore_index=True)
-            file_name = 'tmp/experiment_N2_results-{}-{}.csv'.format(function_name, algorithm_name)
-            results.to_csv(file_name)
+    
+    print('\n\nSaving results...')
+    file_name = 'results_N2.csv'
+    results.to_csv(file_name)
+    print('Results saved to ' + file_name)
     
 if __name__ == '__main__':
     main()
