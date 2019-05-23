@@ -79,9 +79,9 @@ def main():
         (fss, 'FSS')
     ], 'Algorithms')
     functions = tqdm([
-        (sphereFunction, [[-5.12, 5.12]], 'Sphere'),
+        (sphereFunction, [[-100, 100]], 'Sphere'),
         (rastriginsFunction, [[-5.12, 5.12]], 'Rastrigin'),
-        (rosenbrockFunction, [[-5, 10]], 'Rosenbrock')
+        (rosenbrockFunction, [[-30, 30]], 'Rosenbrock')
     ], 'Functions')
     results = pd.DataFrame(columns=['best_fitness', 'fitness_evaluations', 'iterations', 'experiment', 'algorithm', 'test_function'])
     for function, search_space, function_name in functions:
